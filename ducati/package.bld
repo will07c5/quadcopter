@@ -1,0 +1,63 @@
+/* options */
+
+var myTarget = "M3";
+var myPlatform = "ti.omap.platform.core0";
+var defaultProfile = "whole_program_debug";
+var outputName = "quadcopter";
+var compileOptions = "";
+var linkOptions = "";
+var cfgScript = "quadcopter.cfg";
+var cfgArgs = ""; 
+
+var sources = [
+	"main.c",
+	"i2c.c",
+];
+
+/* xdc crap */
+
+var BuildEnv = xdc.useModule('xdc.bld.BuildEnvironment');
+var PkgContents = xdc.useModule('xdc.bld.PackageContents');
+
+var common = xdc.loadCapsule("ti/sdo/ipc/build/common.bld");
+
+var profiles = common.getProfiles(arguments);
+if (profiles.length == 0) {
+	profiles[0] = defaultProfile;
+}
+
+for (var i = 0; i < BuildEnv.targets.length; i++) {
+	var target = BuildEnv.targets[i];
+
+	print("target: " + target['name'] + "\n");
+
+	if (target['name'] != myTarget)
+		continue;
+
+	print("found target\n");
+
+	for (var j = 0; j < target.platforms.length; j++) {
+		platform = target.platforms[j];
+
+		if (platform != myPlatform)
+			continue;
+
+		for (k = 0; k < profiles.length; k++) {
+			profile = profiles[k];
+
+			var opts = {
+				copts: compileOptions,
+				lopts: linkOptions,
+				cfgScript: cfgScript,
+				cfgArgs: cfgArgs,
+				profile: profile,
+			};
+
+			var exe = PkgContents.addExecutable(outputName, 
+			                                    target, platform, 
+			                                    opts); 
+
+			exe.addObjects(sources);
+		}
+	}
+}
